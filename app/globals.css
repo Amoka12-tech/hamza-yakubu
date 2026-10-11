@@ -485,7 +485,7 @@ select:focus-visible {
 }
 .about-portrait img {
   position: absolute;
-  bottom: 0;
+  bottom: -60px;
   width: 100%;
   height: auto;
 }
@@ -2009,18 +2009,21 @@ body {
   background-image: url('/images/confluence.jpeg');
   background-position: 50% 30%;
   border: 1px solid #38bdf832;
+  background-size: cover;
 }
 .project-02 .project-art,
 .project-banner.project-02 {
   background: linear-gradient(135deg, #443570, #18203e);
   background-image: url('/images/electHer.jpeg');
   background-position: 50% 30%;
+  background-size: cover;
 }
 .project-03 .project-art,
 .project-banner.project-03 {
   background: linear-gradient(135deg, #12686d, #102d46);
   background-image: url('/images/locals.jpg');
   background-position: 50% 30%;
+  background-size: cover;
 }
 .project-info {
   padding: 23px 12px 14px;

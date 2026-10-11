@@ -47,7 +47,7 @@ export function About() {
       />
       <section className="about-intro">
         <div className="about-portrait">
-          <img src="/images/about.jpg" className="object-cover w-full h-full rounded-2xl" alt="Hamza Yakubu" />
+          <img src="/images/hamza-img.jpg" className="object-contain w-full h-full rounded-2xl" alt="Hamza Yakubu" />
           <span>HAMZA YAKUBU</span>
         </div>
         <div>
@@ -291,7 +291,7 @@ export function Work() {
         {items.map((w) => (
           <Link
             href={`/work/${w.slug}`}
-            className={`project-card ${w?.image ? `bg-[url('/images/${w.image}')]` : `project-${w.number}`} bg-cover`}
+            className={`project-card project-${w.number}`}
             key={w.slug}
           >
             <div className="project-art">
