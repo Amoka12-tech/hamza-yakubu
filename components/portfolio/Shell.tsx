@@ -59,7 +59,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
-        <a className="cv-link" href="/documents/hamza-yakubu-cv.pdf" download>
+        <a className="cv-link" href="/contact">
           <Download size={16} />
           CV
         </a>

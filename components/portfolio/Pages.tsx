@@ -10,8 +10,11 @@ import {
   Copy,
   Plus,
   Minus,
+  Loader,
 } from "lucide-react";
 import { expertise, work, experience } from "@/data/hamza";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "@/utils/firebase";
 export function PageHeading({
   index,
   title,
@@ -67,10 +70,9 @@ export function About() {
           </p>
           <a
             className="quiet-link"
-            href="/documents/hamza-yakubu-cv.pdf"
-            download
+            href="/contact"
           >
-            <Download size={16} /> Download full CV
+            <Download size={16} /> Request full CV
           </a>
         </div>
       </section>
@@ -460,11 +462,10 @@ export function Experience() {
           <p>{experience[selected][3]}</p>
           <a
             className="quiet-link"
-            href="/documents/hamza-yakubu-cv.pdf"
-            download
+            href="/contact"
           >
             <Download size={16} />
-            Full responsibilities in my CV
+            Request my full CV
           </a>
         </article>
       </div>
@@ -497,6 +498,81 @@ export function Contact() {
     const text = `Hello Hamza,\n\n${message}\n\n${name}`;
     window.location.href = `mailto:yakubuhamza01@gmail.com?subject=${encodeURIComponent(topic)}&body=${encodeURIComponent(text)}`;
   }
+
+  const [submitted, setSubmitted] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: 'Strategic communications',
+    message: ''
+  });
+
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    console.log(`Field changed: ${name} = ${value}`);
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setStatus('loading');
+  setErrorMessage('');
+
+  try {
+    // 1. Notice the collection name changes to 'mail' to match the extension default
+    await addDoc(collection(db, "emails"), {
+      to: ["yakubuhamza01@gmail.com"], // Where you want to receive the notification
+      replyTo: formData.email || "yakubuhamza01@gmail.com", // Lets you reply directly to the sender
+      message: {
+        subject: `[Portfolio Message] ${formData.subject}`,
+        text: `Name: ${formData.name}\nPhone: ${formData?.phone}\nEmail: ${formData.email || 'Not provided'}\n\nMessage:\n${formData.message}`,
+        html: `
+          <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 600px; border: 1px solid #f0f0f0; border-radius: 12px;">
+            <h2 style="color: #312E81; margin-top: 0;">New Contact Form Submission</h2>
+            <p style="color: #666; font-size: 14px;">Received from the Hamza Yakubu's website.</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+            <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; color: #666; width: 100px;">Full Name:</td>
+                <td style="padding: 6px 0; color: #111;">${formData.name}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; color: #666;">Phone:</td>
+                <td style="padding: 6px 0; color: #111;">${formData?.phone}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; color: #666;">Email:</td>
+                <td style="padding: 6px 0; color: #111;">${formData.email || 'Not provided'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; color: #666;">Subject:</td>
+                <td style="padding: 6px 0; color: #111;">${formData.subject}</td>
+              </tr>
+            </table>
+            <br/>
+            <p style="font-weight: bold; color: #666; margin-bottom: 8px; font-size: 14px;">Message Details:</p>
+            <div style="white-space: pre-wrap; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; line-height: 1.5; color: #334155;">
+              ${formData.message}
+            </div>
+          </div>
+        `
+      }
+    });
+
+    setStatus('success');
+    setSubmitted(true);
+    setFormData({ name: '', email: '', phone: '', subject: 'Strategic communications', message: '' });
+  } catch (error: any) {
+    console.error("Error submitting form: ", error);
+    setStatus('error');
+    setErrorMessage(error.message || 'Something went wrong. Please try again.');
+  }
+};
   return (
     <div className="page-container">
       <PageHeading
@@ -542,7 +618,18 @@ export function Contact() {
             <span>Kubwa, Abuja, Nigeria</span>
           </p>
         </div>
-        <form className="contact-compose" onSubmit={compose}>
+        {submitted ? (
+          <div className="contact-card">
+            <p className="kicker">MESSAGE SENT</p>
+            <h2>
+              Thank you for
+              <br />
+              <em>reaching out.</em>
+            </h2>
+            <p>I will get back to you as soon as possible.</p>
+          </div>
+        ) : (
+          <form className="contact-compose" onSubmit={handleSubmit}>
           <p className="kicker">START A CONVERSATION</p>
           <h2>
             What do you
@@ -552,8 +639,9 @@ export function Contact() {
           <label htmlFor="topic">I’d like to discuss</label>
           <select
             id="topic"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
+            value={formData.subject}
+            onChange={handleChange}
+            name="subject"
           >
             {[
               "Strategic communications",
@@ -561,6 +649,7 @@ export function Contact() {
               "Storytelling & documentation",
               "Programme leadership",
               "Another collaboration",
+              "CV request",
             ].map((t) => (
               <option key={t}>{t}</option>
             ))}
@@ -570,30 +659,63 @@ export function Contact() {
             id="name"
             name="name"
             autoComplete="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={formData.name}
+            onChange={handleChange}
             required
             maxLength={100}
             placeholder="How should Hamza address you?"
+          />
+          <label htmlFor="email">Your email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            maxLength={100}
+            placeholder="Where should Hamza reach you?"
+          />
+          <label htmlFor="phone">Your phone</label>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            value={formData.phone}
+            onChange={handleChange}
+            maxLength={20}
+            placeholder="Optional, if you prefer a call."
           />
           <label htmlFor="message">Your message</label>
           <textarea
             id="message"
             name="message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            value={formData.message}
+            onChange={handleChange}
             required
             maxLength={3000}
             rows={4}
             placeholder="A little about your idea or project…"
           />
-          <button type="submit" className="button">
-            Open email draft <Mail size={17} />
+          <button type="submit" disabled={status === "loading"} className="button">
+            {status === "loading" 
+            ? (
+              <>
+                <Loader size={16} className="spin" />
+                <span>Sending…</span>
+              </>
+            ) : (<>
+                <span>Send message</span>
+                <Mail size={17} />
+            </>)}
           </button>
           <p className="form-note">
-            Opens your email app with a draft. You can review and send it there.
+            Note: Hamza will respond to your message within 1–3 business days. If you do not receive a response, please check your spam folder or reach out via the email link above.
           </p>
         </form>
+        )}
       </div>
     </div>
   );
